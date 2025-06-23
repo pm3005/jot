@@ -220,37 +220,47 @@ const Sidebar = ({
 
               {/* Create Folder Form */}
               {showCreateFolder && (
-                <div className="mb-3 p-3 bg-navy-800 rounded-lg">
+                <div className="p-3 mt-2 rounded-lg bg-navy-800 border border-navy-700 space-y-2">
                   <input
                     type="text"
                     placeholder="Folder name"
                     value={newFolderName}
-                    onChange={e => setNewFolderName(e.target.value)}
-                    onKeyDown={e => e.key === 'Enter' && handleCreateFolder()}
-                    className="w-full mb-2 px-3 py-2 bg-navy-900 border border-navy-700 rounded text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-slate-500"
+                    onChange={(e) => setNewFolderName(e.target.value)}
+                    className="w-full px-3 py-2 rounded-md text-sm bg-navy-900 border border-navy-600 placeholder-slate-400 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') handleCreateFolder();
+                    }}
                   />
+              
                   <div className="flex items-center justify-between">
-                    <div className="flex space-x-1">
-                      {folderColors.map(color => (
+                    {/* Color picker */}
+                    <div className="flex space-x-2">
+                      {folderColors.map((color) => (
                         <button
                           key={color}
                           onClick={() => setNewFolderColor(color)}
-                          className={`w-6 h-6 rounded-full border-2 ${
-                            newFolderColor === color ? 'border-slate-400' : 'border-transparent'
+                          className={`w-5 h-5 rounded-full border-2 transition-transform duration-150 ${
+                            newFolderColor === color
+                              ? 'border-white scale-110'
+                              : 'border-transparent'
                           }`}
                           style={{ backgroundColor: color }}
+                          aria-label={`Select ${color} color`}
                         />
                       ))}
                     </div>
+              
+                    {/* Create button */}
                     <button
                       onClick={handleCreateFolder}
-                      className="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
+                      className="px-3 py-1 rounded-md text-sm font-medium bg-blue-600 hover:bg-blue-700 text-white transition"
                     >
                       Create
                     </button>
                   </div>
                 </div>
               )}
+
 
               {/* All Notes button */}
               <button
