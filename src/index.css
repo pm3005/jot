@@ -1,0 +1,111 @@
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Jot App Styling */
+
+@layer base {
+  :root {
+    --background: 250 250 250;
+    --foreground: 15 23 42;
+
+    --card: 255 255 255;
+    --card-foreground: 15 23 42;
+
+    --popover: 255 255 255;
+    --popover-foreground: 15 23 42;
+
+    --primary: 26 32 44;
+    --primary-foreground: 248 250 252;
+
+    --secondary: 241 245 249;
+    --secondary-foreground: 15 23 42;
+
+    --muted: 241 245 249;
+    --muted-foreground: 100 116 139;
+
+    --accent: 246 173 85;
+    --accent-foreground: 15 23 42;
+
+    --destructive: 239 68 68;
+    --destructive-foreground: 248 250 252;
+
+    --border: 226 232 240;
+    --input: 226 232 240;
+    --ring: 246 173 85;
+
+    --radius: 0.75rem;
+
+    --sidebar-background: 26 32 44;
+    --sidebar-foreground: 203 213 225;
+    --sidebar-primary: 246 173 85;
+    --sidebar-primary-foreground: 15 23 42;
+    --sidebar-accent: 45 55 72;
+    --sidebar-accent-foreground: 248 250 252;
+    --sidebar-border: 45 55 72;
+    --sidebar-ring: 246 173 85;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-gradient-to-br from-slate-50 to-slate-100 text-foreground font-inter;
+  }
+}
+
+/* Quill Editor Customization */
+.ql-toolbar {
+  @apply border-t-0 border-l-0 border-r-0 border-b border-slate-200 bg-white rounded-t-lg;
+}
+
+.ql-container {
+  @apply border-slate-200 rounded-b-lg;
+}
+
+.ql-editor {
+  @apply min-h-[500px] text-base leading-relaxed;
+}
+
+.ql-editor.ql-blank::before {
+  @apply text-slate-400 italic;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-slate-100;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-slate-300 rounded-full;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-slate-400;
+}
+
+/* AI Features styling */
+.ai-menu {
+  @apply bg-white border border-slate-200 rounded-lg shadow-lg z-50;
+}
+
+.ai-menu-item {
+  @apply px-4 py-2 hover:bg-slate-50 cursor-pointer transition-colors border-b border-slate-100 last:border-b-0;
+}
+
+/* Note card styling */
+.note-card {
+  @apply bg-white rounded-lg shadow-sm border border-slate-200 hover:shadow-md transition-all duration-200 cursor-pointer;
+}
+
+.note-card:hover {
+  @apply transform -translate-y-1;
+}
