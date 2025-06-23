@@ -1,24 +1,27 @@
-import { useState } from 'react';
-import { Note, Folder } from '@/types/Note';
-import { PlusCircle, Search, Menu, Trash2, FileText, FolderOpen, LogOut } from 'lucide-react';
-import FolderManager from './FolderManager';
-import { useAuth } from '@/contexts/AuthContext';
-import { useNavigate } from 'react-router-dom';
+import React, { useState } from 'react';
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+  PlusCircle,
+  Search,
+  FileText,
+  Trash2,
+  Menu,
+  Folder,
+  FolderOpen,
+  FolderPlus,
+  Plus,
+  MoreVertical,
+  X,
+  Tag,
+} from 'lucide-react';
+import { Note, Folder as FolderType } from '@/types/Note';
 
 interface SidebarProps {
   notes: Note[];
-  folders: Folder[];
+  folders: FolderType[];
   activeNoteId: string | null;
   selectedFolderId: string | null;
   onNoteSelect: (noteId: string) => void;
-  onNewNote: () => void;
+  onNewNote: (folderId?: string) => void;
   onDeleteNote: (noteId: string) => void;
   onCreateFolder: (name: string, color: string) => void;
   onDeleteFolder: (folderId: string) => void;
@@ -43,61 +46,108 @@ const Sidebar = ({
   onSelectFolder,
   onMoveNoteToFolder,
   collapsed,
-  onToggleCollapse
+  onToggleCollapse,
 }: SidebarProps) => {
   const [searchTerm, setSearchTerm] = useState('');
-  const { signOut } = useAuth();
-  const navigate = useNavigate();
+  const [showCreateFolder, setShowCreateFolder] = useState(false);
+  const [newFolderName, setNewFolderName] = useState('');
+  const [newFolderColor, setNewFolderColor] = useState('#3b82f6');
+  const [showFolderOptions, setShowFolderOptions] = useState<string | null>(null);
+  const [editingFolder, setEditingFolder] = useState<string | null>(null);
+  const [editFolderName, setEditFolderName] = useState('');
+  const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set([null]));
 
-  const handleSignOut = async () => {
-    await signOut();
-    navigate('/auth');
-  };
+  const folderColors = [
+    '#3b82f6', '#ef4444', '#10b981', '#f59e0b',
+    '#8b5cf6', '#ec4899', '#06b6d4', '#84cc16',
+  ];
 
+  // Filter notes by search and folder
   const filteredNotes = notes.filter(note => {
-    const matchesSearch = note.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    const matchesSearch =
+      note.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
       note.content.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    const matchesFolder = selectedFolderId === null || note.folderId === selectedFolderId;
-    
+
+    const matchesFolder =
+      selectedFolderId === null ? true : note.folderId === selectedFolderId;
+
     return matchesSearch && matchesFolder;
   });
 
-  const formatDate = (date: Date) => {
-    return new Intl.DateTimeFormat('en-US', {
+  // Get notes inside a specific folder (with search filter)
+  const getFolderNotes = (folderId: string | null) => {
+    return filteredNotes.filter(note => note.folderId === folderId);
+  };
+
+  const handleCreateFolder = () => {
+    if (newFolderName.trim()) {
+      onCreateFolder(newFolderName.trim(), newFolderColor);
+      setNewFolderName('');
+      setNewFolderColor('#3b82f6');
+      setShowCreateFolder(false);
+    }
+  };
+
+  const handleRenameFolder = (folderId: string) => {
+    if (editFolderName.trim()) {
+      onRenameFolder(folderId, editFolderName.trim());
+      setEditingFolder(null);
+      setEditFolderName('');
+    }
+  };
+
+  const startEditingFolder = (folderId: string, currentName: string) => {
+    setEditingFolder(folderId);
+    setEditFolderName(currentName);
+    setShowFolderOptions(null);
+  };
+
+  const toggleFolderExpansion = (folderId: string | null) => {
+    const newExpanded = new Set(expandedFolders);
+    if (newExpanded.has(folderId)) {
+      newExpanded.delete(folderId);
+    } else {
+      newExpanded.add(folderId);
+    }
+    setExpandedFolders(newExpanded);
+  };
+
+  const formatDate = (date: Date) =>
+    new Intl.DateTimeFormat('en-US', {
       month: 'short',
       day: 'numeric',
       hour: 'numeric',
-      minute: '2-digit'
+      minute: '2-digit',
     }).format(date);
-  };
 
-  const getPreview = (content: string, maxLength: number = 100) => {
-    const textContent = content.replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ');
-    return textContent.length > maxLength 
-      ? textContent.substring(0, maxLength) + '...'
-      : textContent;
+  const getFolderColor = (folderId: string | null) => {
+    if (folderId === null) return '#6b7280';
+    const folder = folders.find(f => f.id === folderId);
+    return folder?.color || '#6b7280';
   };
 
   return (
-    <div className={`fixed left-0 top-0 h-full bg-navy-900 text-white transition-all duration-300 z-10 ${
-      collapsed ? 'w-16' : 'w-80'
-    }`}>
+    <div
+      className={`fixed left-0 top-0 h-full bg-navy-900 text-white transition-all duration-300 z-10 ${
+        collapsed ? 'w-16' : 'w-80'
+      }`}
+    >
       {/* Header */}
       <div className="p-4 border-b border-navy-700">
         <div className="flex items-center justify-between">
           <button
             onClick={onToggleCollapse}
             className="p-2 hover:bg-navy-800 rounded-lg transition-colors"
+            title="Toggle sidebar"
           >
             <Menu size={20} />
           </button>
-          
+
           {!collapsed && (
             <>
               <h1 className="text-xl font-bold text-white">Jot</h1>
               <button
-                onClick={onNewNote}
+                onClick={() => onNewNote()}
                 className="p-2 hover:bg-navy-800 rounded-lg transition-colors"
                 title="New Note"
               >
@@ -105,10 +155,10 @@ const Sidebar = ({
               </button>
             </>
           )}
-          
+
           {collapsed && (
             <button
-              onClick={onNewNote}
+              onClick={() => onNewNote()}
               className="p-2 hover:bg-navy-800 rounded-lg transition-colors"
               title="New Note"
             >
@@ -116,7 +166,7 @@ const Sidebar = ({
             </button>
           )}
         </div>
-        
+
         {!collapsed && (
           <div className="mt-4 relative">
             <Search className="absolute left-3 top-3 text-slate-400" size={16} />
@@ -124,7 +174,7 @@ const Sidebar = ({
               type="text"
               placeholder="Search notes..."
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              onChange={e => setSearchTerm(e.target.value)}
               className="w-full pl-10 pr-4 py-2 bg-navy-800 border border-navy-700 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-500"
             />
           </div>
@@ -132,134 +182,329 @@ const Sidebar = ({
       </div>
 
       {/* Content */}
-      <div className="flex-1 overflow-y-auto h-[calc(100vh-140px)]">
+      <div className={`flex-1 overflow-y-auto h-[calc(100vh-140px)] ${collapsed ? 'p-2' : 'p-4'}`}>
         {collapsed ? (
-          <div className="p-2">
-            {filteredNotes.map((note) => (
-              <button
-                key={note.id}
-                onClick={() => onNoteSelect(note.id)}
-                className={`w-full p-3 mb-2 rounded-lg transition-all duration-200 flex items-center justify-center ${
-                  activeNoteId === note.id
-                    ? 'bg-slate-200 text-navy-900'
-                    : 'hover:bg-navy-800 text-slate-300'
-                }`}
-                title={note.title}
-              >
-                <FileText size={20} />
-              </button>
-            ))}
-          </div>
+          // Collapsed notes buttons
+          filteredNotes.map(note => (
+            <button
+              key={note.id}
+              onClick={() => onNoteSelect(note.id)}
+              className={`w-full p-3 mb-2 rounded-lg transition-all duration-200 flex items-center justify-center ${
+                activeNoteId === note.id
+                  ? 'bg-slate-200 text-navy-900'
+                  : 'hover:bg-navy-800 text-slate-300'
+              }`}
+              title={note.title}
+            >
+              <FileText size={20} />
+            </button>
+          ))
         ) : (
-          <div className="p-4">
-            {/* Folder Manager */}
-            <FolderManager
-              folders={folders}
-              onCreateFolder={onCreateFolder}
-              onDeleteFolder={onDeleteFolder}
-              onRenameFolder={onRenameFolder}
-              selectedFolderId={selectedFolderId}
-              onSelectFolder={onSelectFolder}
-            />
-
-            {/* Notes List */}
-            {filteredNotes.length === 0 ? (
-              <div className="text-center py-8">
-                <FileText className="mx-auto mb-4 text-slate-500" size={48} />
-                <p className="text-slate-400">No notes found</p>
-              </div>
-            ) : (
-              filteredNotes.map((note) => (
-                <div
-                  key={note.id}
-                  className={`note-card mb-3 p-4 rounded-lg cursor-pointer transition-all duration-200 group ${
-                    activeNoteId === note.id
-                      ? 'bg-slate-200 text-navy-900'
-                      : 'bg-navy-800 hover:bg-navy-700 text-white'
-                  }`}
-                  onClick={() => onNoteSelect(note.id)}
+          // Expanded sidebar content
+          <>
+            {/* Folders & Folder Controls */}
+            <div className="mb-4">
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center space-x-2 text-slate-400 font-semibold">
+                  <FolderPlus size={18} />
+                  <span>Folders</span>
+                </div>
+                <button
+                  onClick={() => setShowCreateFolder(!showCreateFolder)}
+                  className="p-1 hover:bg-navy-800 rounded transition-colors"
+                  title="Create Folder"
                 >
-                  <div className="flex justify-between items-start mb-2">
-                    <h3 className="font-semibold truncate flex-1 mr-2">
-                      {note.title}
-                    </h3>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
+                  <Plus size={16} />
+                </button>
+              </div>
+
+              {/* Create Folder Form */}
+              {showCreateFolder && (
+                <div className="mb-3 p-3 bg-navy-800 rounded-lg">
+                  <input
+                    type="text"
+                    placeholder="Folder name"
+                    value={newFolderName}
+                    onChange={e => setNewFolderName(e.target.value)}
+                    onKeyDown={e => e.key === 'Enter' && handleCreateFolder()}
+                    className="w-full mb-2 px-3 py-2 bg-navy-900 border border-navy-700 rounded text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-slate-500"
+                  />
+                  <div className="flex items-center justify-between">
+                    <div className="flex space-x-1">
+                      {folderColors.map(color => (
                         <button
-                          onClick={(e) => e.stopPropagation()}
-                          className="opacity-0 group-hover:opacity-100 p-1 rounded transition-all hover:bg-navy-600"
-                          title="Note options"
-                        >
-                          <FileText size={14} />
-                        </button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end" className="w-48 bg-white">
-                        <DropdownMenuItem onClick={() => onMoveNoteToFolder(note.id, null)} className="hover:bg-slate-100">
-                          <FolderOpen size={14} className="mr-2" />
-                          Remove from folder
-                        </DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        {folders.map((folder) => (
-                          <DropdownMenuItem
-                            key={folder.id}
-                            onClick={() => onMoveNoteToFolder(note.id, folder.id)}
-                            className="hover:bg-slate-100"
-                          >
-                            <div
-                              className="w-3 h-3 rounded-full mr-2"
-                              style={{ backgroundColor: folder.color }}
-                            />
-                            Move to {folder.name}
-                          </DropdownMenuItem>
-                        ))}
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem 
-                          onClick={() => onDeleteNote(note.id)}
-                          className="text-red-600 hover:bg-red-50"
-                        >
-                          <Trash2 size={14} className="mr-2" />
-                          Delete note
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </div>
-                  
-                  <p className={`text-sm mb-2 line-clamp-2 ${
-                    activeNoteId === note.id ? 'text-navy-700' : 'text-slate-400'
-                  }`}>
-                    {getPreview(note.content)}
-                  </p>
-                  
-                  <div className={`text-xs ${
-                    activeNoteId === note.id ? 'text-navy-600' : 'text-slate-500'
-                  }`}>
-                    {formatDate(note.updatedAt)}
+                          key={color}
+                          onClick={() => setNewFolderColor(color)}
+                          className={`w-6 h-6 rounded-full border-2 ${
+                            newFolderColor === color ? 'border-slate-400' : 'border-transparent'
+                          }`}
+                          style={{ backgroundColor: color }}
+                        />
+                      ))}
+                    </div>
+                    <button
+                      onClick={handleCreateFolder}
+                      className="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
+                    >
+                      Create
+                    </button>
                   </div>
                 </div>
-              ))
-            )}
-          </div>
-        )}
-      </div>
+              )}
 
-      {/* Footer - Sign Out Button */}
-      <div className="p-4 border-t border-navy-700">
-        {collapsed ? (
-          <button
-            onClick={handleSignOut}
-            className="w-full p-2 hover:bg-navy-800 rounded-lg transition-colors flex items-center justify-center"
-            title="Sign Out"
-          >
-            <LogOut size={20} />
-          </button>
-        ) : (
-          <button
-            onClick={handleSignOut}
-            className="w-full p-3 hover:bg-navy-800 rounded-lg transition-colors flex items-center space-x-2 text-slate-300 hover:text-white"
-          >
-            <LogOut size={18} />
-            <span>Sign Out</span>
-          </button>
+              {/* All Notes button */}
+              <button
+                onClick={() => {
+                  onSelectFolder(null);
+                  toggleFolderExpansion(null);
+                }}
+                className={`w-full flex items-center justify-between p-2 rounded-lg transition-colors ${
+                  selectedFolderId === null ? 'bg-blue-50 text-blue-700' : 'hover:bg-navy-800'
+                }`}
+              >
+                <div className="flex items-center space-x-2">
+                  {expandedFolders.has(null) ? (
+                    <FolderOpen className="w-4 h-4 text-slate-400" />
+                  ) : (
+                    <Folder className="w-4 h-4 text-slate-400" />
+                  )}
+                  <span className="font-medium">All Notes</span>
+                </div>
+                <span className="text-xs text-slate-400">({notes.length})</span>
+              </button>
+
+              {/* Folder List */}
+              <div className="mt-2 space-y-1">
+                {folders.map(folder => (
+                  <div key={folder.id} className="group relative">
+                    <div className="flex items-center justify-between p-2 hover:bg-navy-800 rounded-lg cursor-pointer">
+                      <button
+                        onClick={() => {
+                          onSelectFolder(folder.id);
+                          toggleFolderExpansion(folder.id);
+                        }}
+                        className={`flex items-center justify-between flex-1 ${
+                          selectedFolderId === folder.id ? 'text-blue-400' : 'text-white'
+                        }`}
+                      >
+                        <div className="flex items-center space-x-2">
+                          {expandedFolders.has(folder.id) ? (
+                            <FolderOpen
+                              className="w-5 h-5"
+                              style={{ color: folder.color }}
+                            />
+                          ) : (
+                            <Folder
+                              className="w-5 h-5"
+                              style={{ color: folder.color }}
+                            />
+                          )}
+
+                          {editingFolder === folder.id ? (
+                            <input
+                              type="text"
+                              value={editFolderName}
+                              onChange={e => setEditFolderName(e.target.value)}
+                              onKeyDown={e => e.key === 'Enter' && handleRenameFolder(folder.id)}
+                              onBlur={() => handleRenameFolder(folder.id)}
+                              autoFocus
+                              className="bg-navy-900 border border-navy-700 rounded px-2 py-1 text-white text-sm focus:outline-none focus:ring-2 focus:ring-slate-500"
+                            />
+                          ) : (
+                            <span className="font-medium truncate">{folder.name}</span>
+                          )}
+                        </div>
+                        <span className="text-xs text-slate-400">{`(${folder.noteCount ?? 0})`}</span>
+                      </button>
+
+                      {/* Folder Options */}
+                      <button
+                        onClick={e => {
+                          e.stopPropagation();
+                          setShowFolderOptions(showFolderOptions === folder.id ? null : folder.id);
+                        }}
+                        className="opacity-0 group-hover:opacity-100 p-1 hover:bg-navy-700 rounded transition"
+                        title="Folder options"
+                      >
+                        <MoreVertical className="w-4 h-4 text-slate-400" />
+                      </button>
+                    </div>
+
+                    {showFolderOptions === folder.id && (
+                      <div className="absolute right-3 top-full mt-1 bg-navy-800 border border-navy-700 rounded shadow z-20 min-w-[140px]">
+                        <button
+                          onClick={() => {
+                            onNewNote(folder.id);
+                            setShowFolderOptions(null);
+                          }}
+                          className="block w-full text-left px-3 py-2 text-sm text-white hover:bg-navy-700 rounded-t"
+                        >
+                          Add Note
+                        </button>
+                        <button
+                          onClick={() => startEditingFolder(folder.id, folder.name)}
+                          className="block w-full text-left px-3 py-2 text-sm text-white hover:bg-navy-700"
+                        >
+                          Rename
+                        </button>
+                        <button
+                          onClick={() => {
+                            onDeleteFolder(folder.id);
+                            setShowFolderOptions(null);
+                          }}
+                          className="block w-full text-left px-3 py-2 text-sm text-red-500 hover:bg-red-700 rounded-b"
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    )}
+
+                    {/* Notes inside expanded folder */}
+                    {expandedFolders.has(folder.id) && selectedFolderId === folder.id && (
+                      <div className="ml-6 mt-1 space-y-1">
+                        {getFolderNotes(folder.id).map(note => (
+                          <div
+                            key={note.id}
+                            onClick={() => onNoteSelect(note.id)}
+                            className={`group relative p-3 rounded-lg cursor-pointer transition-colors hover:bg-navy-800 ${
+                              activeNoteId === note.id ? 'bg-blue-700 text-white' : 'text-slate-300'
+                            }`}
+                          >
+                            <div className="flex justify-between items-start">
+                              <div className="flex-1 min-w-0">
+                                <h3 className="font-medium truncate text-sm">{note.title}</h3>
+                                <p className="text-xs line-clamp-2 text-slate-400 mt-1">
+                                  {note.content.replace(/<[^>]*>/g, '').substring(0, 80)}...
+                                </p>
+                                <div className="flex items-center space-x-2 text-xs text-slate-400 mt-1">
+                                  <span>{formatDate(note.updatedAt)}</span>
+                                  {note.tags.length > 0 && (
+                                    <>
+                                      <span>•</span>
+                                      <div className="flex items-center space-x-1">
+                                        <Tag className="w-3 h-3" />
+                                        <span>{note.tags.length}</span>
+                                      </div>
+                                    </>
+                                  )}
+                                </div>
+                              </div>
+                              <div className="flex items-center space-x-1">
+                                <select
+                                  value={note.folderId}
+                                  onChange={e => {
+                                    e.stopPropagation();
+                                    onMoveNoteToFolder(note.id, e.target.value);
+                                  }}
+                                  className="opacity-0 group-hover:opacity-100 text-xs border border-navy-700 rounded px-2 py-1 bg-navy-900 text-white transition-opacity"
+                                  onClick={e => e.stopPropagation()}
+                                >
+                                  {folders.map(f => (
+                                    <option key={f.id} value={f.id}>
+                                      {f.name}
+                                    </option>
+                                  ))}
+                                </select>
+                                <button
+                                  onClick={e => {
+                                    e.stopPropagation();
+                                    onDeleteNote(note.id);
+                                  }}
+                                  className="opacity-0 group-hover:opacity-100 p-1 hover:bg-red-700 hover:text-red-400 rounded transition"
+                                  title="Delete Note"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Notes List for "All" folder (null selectedFolderId) */}
+            {selectedFolderId === null && expandedFolders.has(null) && (
+              <div>
+                {filteredNotes.length === 0 ? (
+                  <div className="text-center py-8 text-slate-400">
+                    <FileText className="mx-auto mb-4" size={48} />
+                    No notes found
+                  </div>
+                ) : (
+                  filteredNotes.map(note => (
+                    <div
+                      key={note.id}
+                      onClick={() => onNoteSelect(note.id)}
+                      className={`group relative p-4 rounded-lg cursor-pointer transition-colors hover:bg-navy-800 ${
+                        activeNoteId === note.id ? 'bg-blue-700 text-white' : 'text-slate-300'
+                      }`}
+                    >
+                      <div className="flex justify-between items-start">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center space-x-2 mb-1">
+                            <div
+                              className="w-2 h-2 rounded-full"
+                              style={{ backgroundColor: getFolderColor(note.folderId) }}
+                            />
+                            <h3 className="font-medium truncate">{note.title}</h3>
+                            <span className="text-xs text-slate-400">
+                              ({folders.find(f => f.id === note.folderId)?.name ?? 'No Folder'})
+                            </span>
+                          </div>
+                          <p className="text-sm line-clamp-2 text-slate-400 mb-2">
+                            {note.content.replace(/<[^>]*>/g, '').substring(0, 100)}...
+                          </p>
+                          <div className="flex items-center space-x-2 text-xs text-slate-400">
+                            <span>{formatDate(note.updatedAt)}</span>
+                            {note.tags.length > 0 && (
+                              <>
+                                <span>•</span>
+                                <div className="flex items-center space-x-1">
+                                  <Tag className="w-3 h-3" />
+                                  <span>{note.tags.length} tags</span>
+                                </div>
+                              </>
+                            )}
+                          </div>
+                        </div>
+                        <div className="flex items-center space-x-1">
+                          <select
+                            value={note.folderId}
+                            onChange={e => {
+                              e.stopPropagation();
+                              onMoveNoteToFolder(note.id, e.target.value);
+                            }}
+                            className="opacity-0 group-hover:opacity-100 text-xs border border-navy-700 rounded px-2 py-1 bg-navy-900 text-white transition-opacity"
+                            onClick={e => e.stopPropagation()}
+                          >
+                            {folders.map(f => (
+                              <option key={f.id} value={f.id}>
+                                {f.name}
+                              </option>
+                            ))}
+                          </select>
+                          <button
+                            onClick={e => {
+                              e.stopPropagation();
+                              onDeleteNote(note.id);
+                            }}
+                            className="opacity-0 group-hover:opacity-100 p-1 hover:bg-red-700 hover:text-red-400 rounded transition"
+                            title="Delete Note"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            )}
+          </>
         )}
       </div>
     </div>
