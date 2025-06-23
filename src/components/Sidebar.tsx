@@ -235,7 +235,7 @@ const toggleFolderExpansion = (folderId: string | null) => {
               
                   <div className="flex items-center justify-between">
                     {/* Color picker */}
-                    <div className="flex space-x-2">
+                    <div className="flex flex-wrap gap-1">
                       {folderColors.map((color) => (
                         <button
                           key={color}
