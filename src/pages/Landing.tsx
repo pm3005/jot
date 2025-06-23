@@ -53,7 +53,7 @@ const Landing = () => {
             </CardContent>
           </Card>
 
-          <Card className="text-center border-slate-200 shadow-sm hover:shadow-md transition-shadow">
+          <Card className="bg-white text-black border border-black">
             <CardHeader>
               <Folder className="h-12 w-12 text-slate-600 mx-auto mb-4" />
               <CardTitle className="text-slate-800">Smart Organization</CardTitle>
@@ -65,7 +65,7 @@ const Landing = () => {
             </CardContent>
           </Card>
 
-          <Card className="bg-white text-black border border-black">
+          <Card className="text-center border-slate-200 shadow-sm hover:shadow-md transition-shadow">
             <CardHeader>
               <Sparkles className="h-12 w-12 text-slate-600 mx-auto mb-4" />
               <CardTitle className="text-slate-800">AI Assistance</CardTitle>
