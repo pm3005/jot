@@ -253,7 +253,7 @@ const Sidebar = ({
                     {/* Create button */}
                     <button
                       onClick={handleCreateFolder}
-                      className="px-3 py-1 rounded-md text-sm font-medium bg-blue-600 hover:bg-blue-700 text-white transition"
+                      className="px-3 py-1 rounded-md text-sm font-small bg-blue-600 hover:bg-blue-700 text-white transition"
                     >
                       Create
                     </button>
