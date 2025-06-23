@@ -325,7 +325,8 @@ const toggleFolderExpansion = (folderId: string | null) => {
                             <span className="font-medium truncate">{folder.name}</span>
                           )}
                         </div>
-                        <span className="text-xs text-slate-400">{`(${folder.noteCount ?? 0})`}</span>
+                        <span className="text-xs text-slate-400">{`(${getFolderNotes(folder.id).length
+})`}</span>
                       </button>
 
                       {/* Folder Options */}
