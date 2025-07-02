@@ -12,8 +12,17 @@ import {
   MoreVertical,
   X,
   Tag,
+  FolderIcon,
+  Check,
 } from 'lucide-react';
 import { Note, Folder as FolderType } from '@/types/Note';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator,
+} from '@/components/ui/dropdown-menu';
 
 interface SidebarProps {
   notes: Note[];
@@ -56,6 +65,7 @@ const Sidebar = ({
   const [editingFolder, setEditingFolder] = useState<string | null>(null);
   const [editFolderName, setEditFolderName] = useState('');
   const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set([null]));
+  const [showMoveMenu, setShowMoveMenu] = useState<string | null>(null);
 
   const folderColors = [
     '#3b82f6', '#ef4444', '#10b981', '#f59e0b',
@@ -102,16 +112,15 @@ const Sidebar = ({
     setShowFolderOptions(null);
   };
 
-const toggleFolderExpansion = (folderId: string | null) => {
-  if (folderId === null) {
-    const newExpanded = new Set(expandedFolders);
-    newExpanded.has(null) ? newExpanded.delete(null) : newExpanded.add(null);
-    setExpandedFolders(newExpanded);
-  } else {
-    setExpandedFolders(new Set([folderId]));
-  }
-};
-
+  const toggleFolderExpansion = (folderId: string | null) => {
+    if (folderId === null) {
+      const newExpanded = new Set(expandedFolders);
+      newExpanded.has(null) ? newExpanded.delete(null) : newExpanded.add(null);
+      setExpandedFolders(newExpanded);
+    } else {
+      setExpandedFolders(new Set([folderId]));
+    }
+  };
 
   const formatDate = (date: Date) =>
     new Intl.DateTimeFormat('en-US', {
@@ -126,6 +135,41 @@ const toggleFolderExpansion = (folderId: string | null) => {
     const folder = folders.find(f => f.id === folderId);
     return folder?.color || '#6b7280';
   };
+
+  const handleMoveNote = (noteId: string, targetFolderId: string | null) => {
+    onMoveNoteToFolder(noteId, targetFolderId);
+    setShowMoveMenu(null);
+  };
+
+  const MoveToFolderMenu = ({ noteId }: { noteId: string }) => (
+    <div className="absolute right-0 top-8 mt-1 w-48 bg-white border border-slate-200 rounded-lg shadow-lg z-50">
+      <div className="p-2">
+        <div className="text-xs font-medium text-slate-500 mb-2 px-2">Move to folder:</div>
+        <div className="space-y-1">
+          <button
+            onClick={() => handleMoveNote(noteId, null)}
+            className="w-full text-left px-2 py-1.5 text-sm text-slate-700 hover:bg-slate-100 rounded flex items-center"
+          >
+            <FolderIcon className="w-4 h-4 mr-2 text-slate-400" />
+            No Folder
+          </button>
+          {folders.map(folder => (
+            <button
+              key={folder.id}
+              onClick={() => handleMoveNote(noteId, folder.id)}
+              className="w-full text-left px-2 py-1.5 text-sm text-slate-700 hover:bg-slate-100 rounded flex items-center"
+            >
+              <div 
+                className="w-4 h-4 rounded mr-2 flex-shrink-0"
+                style={{ backgroundColor: folder.color }}
+              />
+              {folder.name}
+            </button>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
 
   return (
     <div
@@ -262,7 +306,6 @@ const toggleFolderExpansion = (folderId: string | null) => {
                 </div>
               )}
 
-
               {/* All Notes button */}
               <button
                 onClick={() => {
@@ -325,51 +368,46 @@ const toggleFolderExpansion = (folderId: string | null) => {
                             <span className="font-medium truncate">{folder.name}</span>
                           )}
                         </div>
-                        <span className="text-xs text-slate-400">{`(${getFolderNotes(folder.id).length
-})`}</span>
+                        <span className="text-xs text-slate-400">{`(${getFolderNotes(folder.id).length})`}</span>
                       </button>
 
                       {/* Folder Options */}
-                      <button
-                        onClick={e => {
-                          e.stopPropagation();
-                          setShowFolderOptions(showFolderOptions === folder.id ? null : folder.id);
-                        }}
-                        className="opacity-0 group-hover:opacity-100 p-1 hover:bg-navy-700 rounded transition"
-                        title="Folder options"
-                      >
-                        <MoreVertical className="w-4 h-4 text-slate-400" />
-                      </button>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <button
+                            onClick={e => e.stopPropagation()}
+                            className="opacity-0 group-hover:opacity-100 p-1 hover:bg-navy-700 rounded transition"
+                            title="Folder options"
+                          >
+                            <MoreVertical className="w-4 h-4 text-slate-400" />
+                          </button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-40">
+                          <DropdownMenuItem
+                            onClick={() => {
+                              onNewNote(folder.id);
+                            }}
+                          >
+                            <Plus className="w-4 h-4 mr-2" />
+                            Add Note
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => startEditingFolder(folder.id, folder.name)}
+                          >
+                            <FileText className="w-4 h-4 mr-2" />
+                            Rename
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem
+                            onClick={() => onDeleteFolder(folder.id)}
+                            className="text-red-600"
+                          >
+                            <Trash2 className="w-4 h-4 mr-2" />
+                            Delete
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </div>
-
-                    {showFolderOptions === folder.id && (
-                      <div className="absolute right-3 top-full mt-1 bg-navy-800 border border-navy-700 rounded shadow z-20 min-w-[140px]">
-                        <button
-                          onClick={() => {
-                            onNewNote(folder.id);
-                            setShowFolderOptions(null);
-                          }}
-                          className="block w-full text-left px-3 py-2 text-sm text-white hover:bg-navy-700 rounded-t"
-                        >
-                          Add Note
-                        </button>
-                        <button
-                          onClick={() => startEditingFolder(folder.id, folder.name)}
-                          className="block w-full text-left px-3 py-2 text-sm text-white hover:bg-navy-700"
-                        >
-                          Rename
-                        </button>
-                        <button
-                          onClick={() => {
-                            onDeleteFolder(folder.id);
-                            setShowFolderOptions(null);
-                          }}
-                          className="block w-full text-left px-3 py-2 text-sm text-red-500 hover:bg-red-700 rounded-b"
-                        >
-                          Delete
-                        </button>
-                      </div>
-                    )}
 
                     {/* Notes inside expanded folder */}
                     {expandedFolders.has(folder.id) && selectedFolderId === folder.id && (
@@ -390,7 +428,7 @@ const toggleFolderExpansion = (folderId: string | null) => {
                                 </p>
                                 <div className="flex items-center space-x-2 text-xs text-slate-400 mt-1">
                                   <span>{formatDate(note.updatedAt)}</span>
-                                  {note.tags.length > 0 && (
+                                  {note.tags && note.tags.length > 0 && (
                                     <>
                                       <span>•</span>
                                       <div className="flex items-center space-x-1">
@@ -401,32 +439,41 @@ const toggleFolderExpansion = (folderId: string | null) => {
                                   )}
                                 </div>
                               </div>
-                              <div className="flex items-center space-x-1">
-                                <select
-                                  value={note.folderId}
-                                  onChange={e => {
-                                    e.stopPropagation();
-                                    onMoveNoteToFolder(note.id, e.target.value);
-                                  }}
-                                  className="opacity-0 group-hover:opacity-100 text-xs border border-navy-700 rounded px-2 py-1 bg-navy-900 text-white transition-opacity"
-                                  onClick={e => e.stopPropagation()}
-                                >
-                                  {folders.map(f => (
-                                    <option key={f.id} value={f.id}>
-                                      {f.name}
-                                    </option>
-                                  ))}
-                                </select>
-                                <button
-                                  onClick={e => {
-                                    e.stopPropagation();
-                                    onDeleteNote(note.id);
-                                  }}
-                                  className="opacity-0 group-hover:opacity-100 p-1 hover:bg-red-700 hover:text-red-400 rounded transition"
-                                  title="Delete Note"
-                                >
-                                  <Trash2 className="w-4 h-4" />
-                                </button>
+                              <div className="flex items-center space-x-1 relative">
+                                <DropdownMenu>
+                                  <DropdownMenuTrigger asChild>
+                                    <button
+                                      onClick={e => e.stopPropagation()}
+                                      className="opacity-0 group-hover:opacity-100 p-1 hover:bg-navy-700 rounded transition"
+                                      title="Note options"
+                                    >
+                                      <MoreVertical className="w-4 h-4" />
+                                    </button>
+                                  </DropdownMenuTrigger>
+                                  <DropdownMenuContent align="end" className="w-40">
+                                    <DropdownMenuItem
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        setShowMoveMenu(showMoveMenu === note.id ? null : note.id);
+                                      }}
+                                    >
+                                      <FolderIcon className="w-4 h-4 mr-2" />
+                                      Move to
+                                    </DropdownMenuItem>
+                                    <DropdownMenuSeparator />
+                                    <DropdownMenuItem
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        onDeleteNote(note.id);
+                                      }}
+                                      className="text-red-600"
+                                    >
+                                      <Trash2 className="w-4 h-4 mr-2" />
+                                      Delete
+                                    </DropdownMenuItem>
+                                  </DropdownMenuContent>
+                                </DropdownMenu>
+                                {showMoveMenu === note.id && <MoveToFolderMenu noteId={note.id} />}
                               </div>
                             </div>
                           </div>
@@ -472,7 +519,7 @@ const toggleFolderExpansion = (folderId: string | null) => {
                           </p>
                           <div className="flex items-center space-x-2 text-xs text-slate-400">
                             <span>{formatDate(note.updatedAt)}</span>
-                            {note.tags.length > 0 && (
+                            {note.tags && note.tags.length > 0 && (
                               <>
                                 <span>•</span>
                                 <div className="flex items-center space-x-1">
@@ -483,32 +530,41 @@ const toggleFolderExpansion = (folderId: string | null) => {
                             )}
                           </div>
                         </div>
-                        <div className="flex items-center space-x-1">
-                          <select
-                            value={note.folderId}
-                            onChange={e => {
-                              e.stopPropagation();
-                              onMoveNoteToFolder(note.id, e.target.value);
-                            }}
-                            className="opacity-0 group-hover:opacity-100 text-xs border border-navy-700 rounded px-2 py-1 bg-navy-900 text-white transition-opacity"
-                            onClick={e => e.stopPropagation()}
-                          >
-                            {folders.map(f => (
-                              <option key={f.id} value={f.id}>
-                                {f.name}
-                              </option>
-                            ))}
-                          </select>
-                          <button
-                            onClick={e => {
-                              e.stopPropagation();
-                              onDeleteNote(note.id);
-                            }}
-                            className="opacity-0 group-hover:opacity-100 p-1 hover:bg-red-700 hover:text-red-400 rounded transition"
-                            title="Delete Note"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
+                        <div className="flex items-center space-x-1 relative">
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <button
+                                onClick={e => e.stopPropagation()}
+                                className="opacity-0 group-hover:opacity-100 p-1 hover:bg-navy-700 rounded transition"
+                                title="Note options"
+                              >
+                                <MoreVertical className="w-4 h-4" />
+                              </button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="w-40">
+                              <DropdownMenuItem
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setShowMoveMenu(showMoveMenu === note.id ? null : note.id);
+                                }}
+                              >
+                                <FolderIcon className="w-4 h-4 mr-2" />
+                                Move to
+                              </DropdownMenuItem>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  onDeleteNote(note.id);
+                                }}
+                                className="text-red-600"
+                              >
+                                <Trash2 className="w-4 h-4 mr-2" />
+                                Delete
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                          {showMoveMenu === note.id && <MoveToFolderMenu noteId={note.id} />}
                         </div>
                       </div>
                     </div>

@@ -7,11 +7,13 @@ import Sidebar from '@/components/Sidebar';
 import NoteEditor from '@/components/NoteEditor';
 import { Loader2, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useToast } from '@/hooks/use-toast';
 
 const Index = () => {
   const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const { noteId } = useParams();
+  const { toast } = useToast();
   const { 
     notes: dbNotes, 
     folders: dbFolders, 
@@ -102,6 +104,15 @@ const Index = () => {
 
   const handleMoveNoteToFolder = async (noteId: string, folderId: string | null) => {
     await updateNote(noteId, { folder_id: folderId });
+    
+    const targetFolderName = folderId 
+      ? folders.find(f => f.id === folderId)?.name || 'Unknown Folder'
+      : 'No Folder';
+    
+    toast({
+      title: "Note moved",
+      description: `Note has been moved to ${targetFolderName}.`,
+    });
   };
 
   const handleBackToDashboard = () => {

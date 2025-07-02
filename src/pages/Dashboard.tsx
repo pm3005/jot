@@ -18,9 +18,18 @@ import {
   LogOut,
   Grid3X3,
   List,
-  Filter
+  Filter,
+  MoreVertical,
+  FolderIcon,
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator,
+} from '@/components/ui/dropdown-menu';
 
 const Dashboard = () => {
   const { user, signOut } = useAuth();
@@ -32,11 +41,13 @@ const Dashboard = () => {
     loading,
     createNote,
     deleteNote,
+    updateNote,
   } = useNotes();
 
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedFolder, setSelectedFolder] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [showMoveMenu, setShowMoveMenu] = useState<string | null>(null);
 
   // Convert database format to app format
   const notes = dbNotes.map(convertDatabaseNoteToNote);
@@ -74,6 +85,20 @@ const Dashboard = () => {
     }
   };
 
+  const handleMoveNote = async (noteId: string, targetFolderId: string | null) => {
+    await updateNote(noteId, { folder_id: targetFolderId });
+    setShowMoveMenu(null);
+    
+    const targetFolderName = targetFolderId 
+      ? folders.find(f => f.id === targetFolderId)?.name || 'Unknown Folder'
+      : 'No Folder';
+    
+    toast({
+      title: "Note moved",
+      description: `Note has been moved to ${targetFolderName}.`,
+    });
+  };
+
   const handleSignOut = async () => {
     await signOut();
     navigate('/auth');
@@ -107,6 +132,36 @@ const Dashboard = () => {
     const folder = folders.find(f => f.id === folderId);
     return folder?.color || '#6b7280';
   };
+
+  const MoveToFolderMenu = ({ noteId }: { noteId: string }) => (
+    <div className="absolute right-0 top-8 mt-1 w-48 bg-white border border-slate-200 rounded-lg shadow-lg z-50">
+      <div className="p-2">
+        <div className="text-xs font-medium text-slate-500 mb-2 px-2">Move to folder:</div>
+        <div className="space-y-1">
+          <button
+            onClick={() => handleMoveNote(noteId, null)}
+            className="w-full text-left px-2 py-1.5 text-sm text-slate-700 hover:bg-slate-100 rounded flex items-center"
+          >
+            <FolderIcon className="w-4 h-4 mr-2 text-slate-400" />
+            No Folder
+          </button>
+          {folders.map(folder => (
+            <button
+              key={folder.id}
+              onClick={() => handleMoveNote(noteId, folder.id)}
+              className="w-full text-left px-2 py-1.5 text-sm text-slate-700 hover:bg-slate-100 rounded flex items-center"
+            >
+              <div 
+                className="w-4 h-4 rounded mr-2 flex-shrink-0"
+                style={{ backgroundColor: folder.color }}
+              />
+              {folder.name}
+            </button>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
 
   if (loading) {
     return (
@@ -308,7 +363,7 @@ const Dashboard = () => {
                         </span>
                       </div>
                     </div>
-                    <div className="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <div className="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity relative">
                       <Button
                         variant="ghost"
                         size="sm"
@@ -320,17 +375,41 @@ const Dashboard = () => {
                       >
                         <Edit3 className="h-4 w-4" />
                       </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleDeleteNote(note.id);
-                        }}
-                        className="h-8 w-8 p-0 hover:bg-red-100 hover:text-red-600"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={(e) => e.stopPropagation()}
+                            className="h-8 w-8 p-0 hover:bg-slate-100"
+                          >
+                            <MoreVertical className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-40">
+                          <DropdownMenuItem
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setShowMoveMenu(showMoveMenu === note.id ? null : note.id);
+                            }}
+                          >
+                            <FolderIcon className="w-4 h-4 mr-2" />
+                            Move to
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDeleteNote(note.id);
+                            }}
+                            className="text-red-600"
+                          >
+                            <Trash2 className="w-4 h-4 mr-2" />
+                            Delete
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                      {showMoveMenu === note.id && <MoveToFolderMenu noteId={note.id} />}
                     </div>
                   </div>
                 </CardHeader>
