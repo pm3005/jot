@@ -28,9 +28,17 @@ const Landing = () => {
       {/* Hero Section */}
       <div className="container mx-auto px-6 py-16">
         <div className="text-center mb-16">
-          <h2 className="text-5xl font-bold text-slate-800 mb-6">
-            Your ideas, organized and enhanced
+         <h2 className="text-5xl font-bold text-slate-800 mb-6">
+            Your ideas,{" "}
+            <span className="bg-gradient-to-r from-purple-700 to-indigo-500 bg-clip-text text-transparent">
+              organized
+            </span>{" "}
+            and{" "}
+            <span className="bg-gradient-to-r from-teal-700 to-cyan-500 bg-clip-text text-transparent">
+              enhanced
+            </span>
           </h2>
+
           <p className="text-xl text-slate-600 mb-8 max-w-2xl mx-auto">
             Jot is the smart note-taking app that helps you capture, organize, and enhance your thoughts with AI assistance.
           </p>
