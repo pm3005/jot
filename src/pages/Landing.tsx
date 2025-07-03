@@ -34,7 +34,7 @@ const Landing = () => {
           <p className="text-xl text-slate-600 mb-8 max-w-2xl mx-auto">
             Jot is the smart note-taking app that helps you capture, organize, and enhance your thoughts with AI assistance.
           </p>
-          <Button size="lg" onClick={() => navigate('/auth')} className="bg-slate-800 hover:bg-slate-700 text-lg px-8 py-3 text=white">
+          <Button size="lg" onClick={() => navigate('/auth')} className="bg-slate-800 hover:bg-slate-700 text-lg px-8 py-3 text-white">
             Start Writing Today
           </Button>
         </div>
