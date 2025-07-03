@@ -19,7 +19,7 @@ const Landing = () => {
           <Button variant="ghost" onClick={() => navigate('/auth')}>
             Sign In
           </Button>
-          <Button onClick={() => navigate('/auth')} className="bg-slate-800 hover:bg-slate-700">
+          <Button onClick={() => navigate('/auth')} className="bg-slate-800 hover:bg-slate-700 text-white">
             Get Started
           </Button>
         </div>
