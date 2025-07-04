@@ -69,6 +69,18 @@ const NoteEditor = ({ note, onUpdateNote }: NoteEditorProps) => {
     }
   };
 
+  const replaceSelectedHtml = (newHtml: string) => {
+    if (quillRef.current && selectionRange) {
+      const quill = quillRef.current.getEditor();
+      quill.deleteText(selectionRange.index, selectionRange.length);
+      
+      // Insert HTML content using clipboard API for better formatting
+      const delta = quill.clipboard.convert(newHtml);
+      quill.updateContents(delta, 'user');
+      quill.setSelection(selectionRange.index + delta.length());
+    }
+  };
+
   const insertTextAtCursor = (text: string) => {
     if (quillRef.current) {
       const quill = quillRef.current.getEditor();
@@ -76,6 +88,19 @@ const NoteEditor = ({ note, onUpdateNote }: NoteEditorProps) => {
       const index = selection ? selection.index : quill.getLength();
       quill.insertText(index, text);
       quill.setSelection(index + text.length);
+    }
+  };
+
+  const insertHtmlAtCursor = (html: string) => {
+    if (quillRef.current) {
+      const quill = quillRef.current.getEditor();
+      const selection = quill.getSelection();
+      const index = selection ? selection.index : quill.getLength();
+      
+      // Insert HTML content using clipboard API for better formatting
+      const delta = quill.clipboard.convert(html);
+      quill.updateContents(delta, 'user');
+      quill.setSelection(index + delta.length());
     }
   };
 
@@ -184,7 +209,9 @@ const NoteEditor = ({ note, onUpdateNote }: NoteEditorProps) => {
           <AIToolbar
             selectedText={selectedText}
             onReplaceText={replaceSelectedText}
+            onReplaceHtml={replaceSelectedHtml}
             onInsertText={insertTextAtCursor}
+            onInsertHtml={insertHtmlAtCursor}
           />
           
           <InsertMenu onInsert={insertTextAtCursor} />
