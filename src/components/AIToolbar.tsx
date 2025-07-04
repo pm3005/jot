@@ -1,15 +1,23 @@
-
 import { useState } from 'react';
 import { Wand2, FileText, Sparkles, ChevronDown } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 
 interface AIToolbarProps {
   selectedText: string;
   onReplaceText: (text: string) => void;
+  onReplaceHtml: (html: string) => void;
   onInsertText: (text: string) => void;
+  onInsertHtml: (html: string) => void;
 }
 
-const AIToolbar = ({ selectedText, onReplaceText, onInsertText }: AIToolbarProps) => {
+const AIToolbar = ({ 
+  selectedText, 
+  onReplaceText, 
+  onReplaceHtml, 
+  onInsertText, 
+  onInsertHtml 
+}: AIToolbarProps) => {
   const [showRewriteMenu, setShowRewriteMenu] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const { toast } = useToast();
@@ -23,19 +31,26 @@ const AIToolbar = ({ selectedText, onReplaceText, onInsertText }: AIToolbarProps
     { label: 'Detailed', value: 'detailed' },
   ];
 
-  const simulateAIResponse = async (prompt: string): Promise<string> => {
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 1000 + Math.random() * 2000));
-    
-    // Mock responses based on the prompt type
-    if (prompt.includes('rewrite')) {
-      return `${selectedText} (rewritten in ${prompt.split(' ')[1]} style)`;
-    } else if (prompt.includes('format')) {
-      return selectedText.charAt(0).toUpperCase() + selectedText.slice(1).toLowerCase().replace(/\s+/g, ' ').trim();
-    } else if (prompt.includes('generate')) {
-      return ` This is AI-generated continuation text that flows naturally from your content. It demonstrates how the Generate feature can help you continue your thoughts seamlessly.`;
+  const callAIFunction = async (action: 'rewrite' | 'format' | 'generate', text: string, mood?: string) => {
+    try {
+      const { data, error } = await supabase.functions.invoke('ai-assistant', {
+        body: { action, text, mood }
+      });
+
+      if (error) {
+        console.error('Supabase function error:', error);
+        throw new Error(error.message || 'AI service error');
+      }
+
+      if (data?.error) {
+        throw new Error(data.error);
+      }
+
+      return data?.result;
+    } catch (error) {
+      console.error('AI function call error:', error);
+      throw error;
     }
-    return selectedText;
   };
 
   const handleRewrite = async (mood: string) => {
@@ -52,17 +67,17 @@ const AIToolbar = ({ selectedText, onReplaceText, onInsertText }: AIToolbarProps
     setShowRewriteMenu(false);
     
     try {
-      const rewrittenText = await simulateAIResponse(`rewrite ${mood} ${selectedText}`);
+      const rewrittenText = await callAIFunction('rewrite', selectedText, mood);
       onReplaceText(rewrittenText);
       
       toast({
         title: "Text rewritten",
         description: `Successfully rewritten in ${mood} style.`,
       });
-    } catch (error) {
+    } catch (error: any) {
       toast({
         title: "Error",
-        description: "Failed to rewrite text. Please try again.",
+        description: error.message || "Failed to rewrite text. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -83,17 +98,18 @@ const AIToolbar = ({ selectedText, onReplaceText, onInsertText }: AIToolbarProps
     setIsProcessing(true);
     
     try {
-      const formattedText = await simulateAIResponse(`format ${selectedText}`);
-      onReplaceText(formattedText);
+      const formattedText = await callAIFunction('format', selectedText);
+      // Use HTML replacement for formatting since it may contain HTML tags
+      onReplaceHtml(formattedText);
       
       toast({
         title: "Text formatted",
         description: "Successfully formatted and fixed typos.",
       });
-    } catch (error) {
+    } catch (error: any) {
       toast({
         title: "Error",
-        description: "Failed to format text. Please try again.",
+        description: error.message || "Failed to format text. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -105,17 +121,20 @@ const AIToolbar = ({ selectedText, onReplaceText, onInsertText }: AIToolbarProps
     setIsProcessing(true);
     
     try {
-      const generatedText = await simulateAIResponse('generate continuation');
-      onInsertText(generatedText);
+      // Use selected text as context, or provide a default prompt if no text is selected
+      const contextText = selectedText.trim() || "Write a helpful and informative paragraph about note-taking and productivity.";
+      const generatedText = await callAIFunction('generate', contextText);
+      // Use HTML insertion for generated content since it may contain HTML formatting
+      onInsertHtml(generatedText);
       
       toast({
         title: "Text generated",
         description: "Successfully generated continuation text.",
       });
-    } catch (error) {
+    } catch (error: any) {
       toast({
         title: "Error",
-        description: "Failed to generate text. Please try again.",
+        description: error.message || "Failed to generate text. Please try again.",
         variant: "destructive",
       });
     } finally {
