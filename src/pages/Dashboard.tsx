@@ -182,7 +182,7 @@ const Dashboard = () => {
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center space-x-4">
               <FileText className="h-8 w-8 text-slate-600" />
-              <h1 className="text-2xl font-bold text-slate-800">Jot Dashboard</h1>
+              <h1 className="text-2xl font-bold text-slate-800">Jot</h1>
             </div>
             
             <div className="flex items-center space-x-4">
