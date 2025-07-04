@@ -68,7 +68,7 @@
 }
 
 .ql-editor {
-  @apply min-h-[500px] text-base leading-relaxed;
+  @apply min-h-[500px] text-base leading-relaxed text-white;
 }
 
 .ql-editor.ql-blank::before {
