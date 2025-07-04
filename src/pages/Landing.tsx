@@ -94,7 +94,7 @@ const Landing = () => {
             Ready to transform your note-taking?
           </h3>
           <p className="text-lg text-slate-600 mb-8">
-            Join thousands of users who have already made the switch to smarter note-taking.
+            Flip the switch to smarter note-taking.
           </p>
           <Button size="lg" onClick={() => navigate('/auth')} className="bg-slate-800 hover:bg-slate-700 text-lg px-8 py-3 text-white">
             Get Started for Free
