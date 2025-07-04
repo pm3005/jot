@@ -39,7 +39,7 @@ const Landing = () => {
             </span>
           </h2>
 
-          <p className="text-l text-slate-600 mb-8 max-w-2xl mx-auto">
+          <p className="text-xl text-slate-600 mb-8 max-w-3xl mx-auto">
            Messy class notes? Midnight deadlines?
 Not anymore. Format and rewrite your notes at the click of a button. Now all you have to do is Jot.
           </p>
