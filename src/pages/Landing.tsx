@@ -40,9 +40,9 @@ const Landing = () => {
           </h2>
 
           <p className="text-xl text-slate-600 mb-8 max-w-2xl mx-auto">
-           Messy class notes? Midnight deadlines? <br />
+           Messy notes? Clean up later? <br />
   Not anymore. Format and rewrite your notes at the click of a button. <br />
-  Now all you have to do is <strong>Jot</strong>.
+  Now, all you have to do is <strong>Jot</strong>.
           </p>
           <Button size="lg" onClick={() => navigate('/auth')} className="bg-slate-800 hover:bg-slate-700 text-lg px-8 py-3 text-white">
             Start Writing Today
