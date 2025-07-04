@@ -1,3 +1,4 @@
+
 export interface Note {
   id: string;
   title: string;
@@ -18,8 +19,8 @@ export interface Folder {
 // Utility functions to convert between database and app formats
 export const convertDatabaseNoteToNote = (dbNote: any): Note => ({
   id: dbNote.id,
-  title: dbNote.title || '',
-  content: dbNote.content || '',
+  title: dbNote.title,
+  content: dbNote.content,
   createdAt: new Date(dbNote.created_at),
   updatedAt: new Date(dbNote.updated_at),
   tags: dbNote.tags || [],
