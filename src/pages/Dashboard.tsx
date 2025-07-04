@@ -227,7 +227,7 @@ const Dashboard = () => {
             </CardContent>
           </Card>
 
-          {/*   <Card className="bg-white border-slate-200">
+          <Card className="bg-white border-slate-200">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium text-slate-600">Recent Activity</CardTitle>
               <Calendar className="h-4 w-4 text-slate-600" />
@@ -243,7 +243,7 @@ const Dashboard = () => {
               <p className="text-xs text-slate-600">notes updated today</p>
             </CardContent>
           </Card>
-        </div>*/}
+        </div>
 
         {/* Controls */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
