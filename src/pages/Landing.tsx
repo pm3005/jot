@@ -41,7 +41,7 @@ const Landing = () => {
 
           <p className="text-xl text-slate-600 mb-8 max-w-2xl mx-auto">
            Scribble now, clean up later?
-Not anymore. Format and rewrite your notes at the click of a button. All you have to do is jot.
+Not anymore. Format and rewrite your notes at the click of a button. All you have to do is Jot.
           </p>
           <Button size="lg" onClick={() => navigate('/auth')} className="bg-slate-800 hover:bg-slate-700 text-lg px-8 py-3 text-white">
             Start Writing Today
