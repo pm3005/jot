@@ -85,7 +85,8 @@ const NoteEditor = ({ note, onUpdateNote }: NoteEditorProps) => {
     if (quillRef.current) {
       const quill = quillRef.current.getEditor();
       const selection = quill.getSelection();
-      const index = selection ? selection.index : quill.getLength();
+      // Insert at the end of the current selection or at the end of the document
+      const index = selection ? selection.index + selection.length : quill.getLength();
       quill.insertText(index, text);
       quill.setSelection(index + text.length);
     }
@@ -95,7 +96,8 @@ const NoteEditor = ({ note, onUpdateNote }: NoteEditorProps) => {
     if (quillRef.current) {
       const quill = quillRef.current.getEditor();
       const selection = quill.getSelection();
-      const index = selection ? selection.index : quill.getLength();
+      // Insert at the end of the current selection or at the end of the document
+      const index = selection ? selection.index + selection.length : quill.getLength();
       
       // Insert HTML content using clipboard API for better formatting
       const delta = quill.clipboard.convert(html);
