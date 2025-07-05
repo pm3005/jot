@@ -63,21 +63,51 @@ const NoteEditor = ({ note, onUpdateNote }: NoteEditorProps) => {
   const replaceSelectedText = (newText: string) => {
     if (quillRef.current && selectionRange) {
       const quill = quillRef.current.getEditor();
-      quill.deleteText(selectionRange.index, selectionRange.length);
-      quill.insertText(selectionRange.index, newText);
-      quill.setSelection(selectionRange.index + newText.length);
+      const Delta = quill.constructor.import('delta');
+      
+      // Create a delta that retains content up to selection, deletes selection, and inserts new text
+      const delta = new Delta()
+        .retain(selectionRange.index)
+        .delete(selectionRange.length)
+        .insert(newText);
+      
+      // Apply the delta as a single atomic operation
+      quill.updateContents(delta, 'user');
+      
+      // Set cursor position after the newly inserted text
+      const newCursorPosition = selectionRange.index + newText.length;
+      quill.setSelection(newCursorPosition, 0);
+      
+      // Clear selection state
+      setSelectedText('');
+      setSelectionRange(null);
     }
   };
 
   const replaceSelectedHtml = (newHtml: string) => {
     if (quillRef.current && selectionRange) {
       const quill = quillRef.current.getEditor();
-      quill.deleteText(selectionRange.index, selectionRange.length);
+      const Delta = quill.constructor.import('delta');
       
-      // Insert HTML content using clipboard API for better formatting
-      const delta = quill.clipboard.convert(newHtml);
+      // Convert HTML to Delta format
+      const htmlDelta = quill.clipboard.convert(newHtml);
+      
+      // Create a delta that retains content up to selection, deletes selection, and inserts new HTML
+      const delta = new Delta()
+        .retain(selectionRange.index)
+        .delete(selectionRange.length)
+        .concat(htmlDelta);
+      
+      // Apply the delta as a single atomic operation
       quill.updateContents(delta, 'user');
-      quill.setSelection(selectionRange.index + delta.length());
+      
+      // Set cursor position after the newly inserted content
+      const newCursorPosition = selectionRange.index + htmlDelta.length();
+      quill.setSelection(newCursorPosition, 0);
+      
+      // Clear selection state
+      setSelectedText('');
+      setSelectionRange(null);
     }
   };
 
