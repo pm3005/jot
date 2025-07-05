@@ -68,7 +68,8 @@ const AIToolbar = ({
     
     try {
       const rewrittenText = await callAIFunction('rewrite', selectedText, mood);
-      onReplaceText(rewrittenText);
+      // Use onReplaceHtml instead of onReplaceText to properly render rich text
+      onReplaceHtml(rewrittenText);
       
       toast({
         title: "Text rewritten",
